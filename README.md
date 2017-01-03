@@ -1,10 +1,5 @@
-<<<<<<< Updated upstream
-![](http://i.imgur.com/3KC3GGK.png)# LearnGit #
-## 1.Git的安装 ##
-=======
 # LearnGit #
 ## 1. Git的安装 ##
->>>>>>> Stashed changes
 - Windows 用户可以可以去[官网](https://git-for-windows.github.io/)下载git bash.exe。
 
 - Ubantu用户需要打开终端依次执行以下命令:
@@ -111,6 +106,139 @@ git init之后我们能够看到的目录。
 - stash apply stash@{0} 将工作区的内容恢复到stash@{0}的状态。
 -  git stash drop stash@{0} 删除stash list中的stash@{0}
 
+## 4.11 git remote -v  ##
+显示远程版本库的信息.
+
+![](http://i.imgur.com/HFxAdFh.png)
+> 如果是一个已有的项目和远程版本库建立联系需要使用命令:git remote add origin url。
+
+## 4.12 git rm --file ##
+ 删除版本库上的文件。
+
+## 4.13 git merge branchName ##
+将名为branchName的分支合并到当前分支。合并之后如果有冲突，需要解决冲突之后才能推送到远程。
+合并分支的时候需要 带上 --no-ff 参数，这样合并之后会生成一条commit信息。完整命令（git merge --no-ff aaa -m “xxx”）,这样如果以后出了问题可以查出是那一条分支合并的时候有问题。如果不带--no-ff将不会知道分支是哪里开始合并。
+
+## 4.14 git push origin branchName ##
+向远程推送名为 branchName分支的内容。
+
+## 4.15 git pull origin branchName ##
+同步远程名为branchName分支的内容到本地。
+
+# 5. Gerrit已知的坑 #
+## 5.1向远程推送的区别 ##
+在向远程推送本地仓库的修改时我们需要注意，使用**Gerrit**一定要用git push origin HEAD:refs/for/master。我们平时向github上面推送代码都是用的git push origin master，使用gerrit 会报错，说权限拒绝，因为我们无权直接将代码推送到主分支master,再gerrit中我们需要先将代码推送到CodeReview分支，审核通过后才能合并到master分支上。
+
+## 5.2 在Gerrit新建一个远程仓库，推送本地信息到远程时出现错误确实change id ##
+下面这段代码是在gerrit web控制端生成的 clone 代码.
+git clone ssh://zhangmingzhe@10.20.40.19:29418/FreemeLite && scp -p -P 29418 zhangmingzhe@10.20.40.19:hooks/commit-msg FreemeLite/.git/hooks/  这样clone下来的库会在.git目录建立一个hooks 目录，这是一系列的钩子函数,里面有各种脚本，其中 commit-msg 会在你提交的时候(git commit -m “xxx”)触发钩子，生成一个change-id,这个changeid 用于gerrit web 控制端的，如果没有这个id,向远程push会报错。
+
+![](http://i.imgur.com/isItU6U.png)
+
+那么问题来了，当我们有一个已经完成的项目需要推送到远程的时候，git init 之后，在.git目录下是不会有 hooks/这个目录，那么提交的时候不会产生change-id，导致最终推送不到远程。解决方法就是：在一个有hooks 目录的项目中将其拷贝到没有hooks的目录中,更新没有changid 的提交，再推送到终端。
+
+# 6.使用AndroidStudio进行Git操作 #
+有的时候还是用IDE集成一些操作比较直观和方便，下面介绍如何使用AndroidStudio进行Git操作。
+
+## 6.1 初始化git仓库 ##
+![](http://i.imgur.com/osx7EO8.png)
+
+- 点击Ceate Git Repository 之后会弹出一个路径选择让你选择一个项目用git去管理。这一步操作等同于 git init。
+
+## 6.2 添加到暂存区 ##
+选择任意一个项目初始化之后，我们看看项目的变化.
+
+![](http://i.imgur.com/QhNVvd3.png)
 
 
+文件全部是红色的。一点没错，因为在终端里面,如果没有使用git add . 命令添加代码的话，就表明文件是未被追踪的，只有提交到暂存区之后，才会变成绿色，当然AndroidStudio也会有对应得操作,如下:
 
+![](http://i.imgur.com/sapkC3i.png)
+
+- 可以看到点击了add之后文件都变成了绿色，保存到了暂存区。此操作等于 git add .。
+
+## 6.3 提交到版本库 ##
+![](http://i.imgur.com/UTrBfth.png)
+![](http://i.imgur.com/X4kVdns.png)
+
+- 如上图所示：这个界面我们非常熟悉了，它等同于git commit 和 git diff 的联合，我们可以点击文件查看不同的内容，不过这个比直接在终端输入更加直观，极大提高我们的速度效率
+
+## 6.4 推送到远程 ##
+代码提交之后我们需要及时推送到远程。
+![](http://i.imgur.com/pE32sY7.png)
+
+点击Push之后如下图所示:
+![](http://i.imgur.com/xdQzsmP.png)
+
+因为我们是第一次推送到远程，所以我们需要定义远程的Origin，点击define remote如下图
+![](http://i.imgur.com/2CQKps6.png)
+
+这个时候我们需要往，url 里面填入我们再远程新建的项目地址。
+这一步操作相当于设置远程Origin,具体操作可以看 Git基本命令中的第11条命令；
+设置完url,点击确定之后，如下图所示:
+
+![](http://i.imgur.com/lcmzvIK.png)
+
+AndroidStudio自动推送到远程master分支。
+在这个界面点击Push之后，会验证你的身份。
+
+![](http://i.imgur.com/5pMGz7d.png)
+
+在这个界面填入你的Gerrit或者是Github的账号密码就可以向远程push代码了。
+
+## 6.5 进行分支操作 ##
+![](http://i.imgur.com/k4OCbjy.png)
+
+![](http://i.imgur.com/z45komM.png)
+
+如上图所示，点new Branch可以新建分支，等同于命令(git checkout -b dev).当前正在使用的分支是dev,如果我想切换到aaa,那么如下所示:
+
+![](http://i.imgur.com/UT5Sf1q.png)
+
+四个功能依次是，切换分支，合并分支，对分支的重新命名和分支的删除，这里AndroidStudio对命令进行了图形化封装。
+
+**接下来详细说下分支合并:**
+![](http://i.imgur.com/WlJWSjQ.png)
+
+点击merge之后如下图所示：
+
+![](http://i.imgur.com/6BwTnUM.png)
+
+可以很清楚的看到,当前分支为master 将要合并名为dev的分支.最下面是我们的commit change.需要写清楚。Merge之后的结果如下图所示，和svn类似：
+![](http://i.imgur.com/q16rruI.png)
+![](http://i.imgur.com/fpf7hoj.png)
+
+如上图所示：可以选择任意的master观察其提交记录非常方便。
+> 总结：上述所有的分支操作，完成时间都是1s，左右不管你有1w个文件和1个文件，git都能做到快速完成，因为git追踪管理的是文件的修改，svn跟踪管理的是文件，所以git的分支操作速度完爆svn。
+
+## 6.6 拉取远程代码 ##
+![](http://i.imgur.com/XtAXUSO.png)
+![](http://i.imgur.com/nWR8H7A.png)
+
+点击pull之后如上图所示：remote标识你远程的代码库，branches to merge表示你想要合并的分支。选择之后，点击pull即可拉取最新代码，如果有冲突，AndroidStudio会弹出一个merge框，让你解决冲突。
+
+## 6.7 进行版本回退 ##
+![](http://i.imgur.com/hGDOUgo.png)
+
+Reset HEAD 标识一系列回退操作，点击之后如下图:
+
+![](http://i.imgur.com/Iu0a6Z2.png)
+![](http://i.imgur.com/Hqcqvxs.png)
+
+其中reset type表示三种版本回退的类型，这里介绍一下:
+
+- 第一种:Mixed 意思是重置暂存区的内容，但不重置工作区的内容
+
+**栗子**
+
+![](http://i.imgur.com/x6ir8F5.png)
+
+结果如上图:我新建了一个TestClass文件 并且添加到暂存区，使用git status命令确认它已经被添加到暂存区,然后使用上述type=mixed ，再使用git status 可以看到，丢弃了TestClass在暂存区的修改，TestClass变成了红色。适用于将错误的信息添加到暂存区的场景。
+
+- 第二种:soft  仅仅改变HEAD指针，并不会对工作区和暂存区有所影响。
+- 第三种:hard 重置工作区和暂存区的所有内容到HEAD下.(工作区和暂存区的内容全部会被刷新).
+
+![](http://i.imgur.com/yVWWref.png)
+
+> 注意：如图所示，表示master将会向后回退2个提交，并且会刷新工作区，暂存区的内容，你之前左右的改动都会丢失！这条命令风险很高，所以版本回退时需要谨慎。
+	
