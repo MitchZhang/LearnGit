@@ -1,4 +1,4 @@
-# LearnGit #
+![](http://i.imgur.com/3KC3GGK.png)# LearnGit #
 ## 1.Git的安装 ##
 - Windows 用户可以可以去[官网](https://git-for-windows.github.io/)下载git bash.exe。
 
