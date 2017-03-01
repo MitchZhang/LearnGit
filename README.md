@@ -25,9 +25,9 @@
 - 使用你的姓名全拼加上Windows开机密码进行登陆。
 - 设置Gerrit邮箱。
 	
+
 ![](http://i.imgur.com/pGthh2t.png)
 ![](http://i.imgur.com/UfBXhqC.png)
-
 
  + 填入公司邮箱，点击确定，会收到一封验证邮件。
 
