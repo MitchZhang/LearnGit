@@ -113,8 +113,17 @@ handler的主要作用是发送消息和处理消息。
                         nextPollTimeoutMillis = -1;
                     }
 ```
-# Looper
-在子线程中必须调用Looper.prepare()来创建一个Looper对象使用,主线程（ActivityThread）已经创建，如果再调用Looper.prepare()就会报错。
+# Looper（消息轮询器）
+
+Looper创建时会获取当前线程的引用，并且会创建一个MessageQueue对象。
+```
+    private Looper(boolean quitAllowed) {
+        mQueue = new MessageQueue(quitAllowed);
+        mThread = Thread.currentThread();
+    }
+```
+
+在子线程中必须调用Looper.prepare()来创建一个Looper对象使用,主线程（ActivityThread）已经创建，如果再调用Looper.prepare()就会抛异常。
 ```
   private static void prepare(boolean quitAllowed) {
         if (sThreadLocal.get() != null) {
@@ -123,10 +132,63 @@ handler的主要作用是发送消息和处理消息。
         sThreadLocal.set(new Looper(quitAllowed));
     }
 ```
-Looper创建时会获取当前线程的引用，并且会创建一个MessageQueue对象。
+## 开启循环 
+Looper.loop()会开启无限循环直到持有的消息队列没有消息。
+- Looper.loop()
 ```
-    private Looper(boolean quitAllowed) {
-        mQueue = new MessageQueue(quitAllowed);
-        mThread = Thread.currentThread();
+ public static void loop() {
+        //获取当前线程中ThreadLoacal中的Looper
+        final Looper me = myLooper();
+        if (me == null) {
+            throw new RuntimeException("No Looper; Looper.prepare() wasn't called on this thread.");
+        }
+        //获取构造函数中的queue
+        final MessageQueue queue = me.mQueue;
+
+        // Make sure the identity of this thread is that of the local process,
+        // and keep track of what that identity token actually is.
+        Binder.clearCallingIdentity();
+        final long ident = Binder.clearCallingIdentity();
+        
+        //开启无限循环
+        for (;;) {
+            //读取queue中的Message
+            Message msg = queue.next(); // might block
+            //如果消息队列中没有message，那么久退出循环
+            if (msg == null) {
+                // No message indicates that the message queue is quitting.
+                return;
+            }
+
+            // This must be in a local variable, in case a UI event sets the logger
+            Printer logging = me.mLogging;
+            if (logging != null) {
+                logging.println(">>>>> Dispatching to " + msg.target + " " +
+                        msg.callback + ": " + msg.what);
+            }
+            //msg.target就是Handler对象，然后再调用其分发消息的方法去处理消息
+            msg.target.dispatchMessage(msg);
+
+            if (logging != null) {
+                logging.println("<<<<< Finished to " + msg.target + " " + msg.callback);
+            }
+
+            // Make sure that during the course of dispatching the
+            // identity of the thread wasn't corrupted.
+            final long newIdent = Binder.clearCallingIdentity();
+            if (ident != newIdent) {
+                Log.wtf(TAG, "Thread identity changed from 0x"
+                        + Long.toHexString(ident) + " to 0x"
+                        + Long.toHexString(newIdent) + " while dispatching to "
+                        + msg.target.getClass().getName() + " "
+                        + msg.callback + " what=" + msg.what);
+            }
+
+            msg.recycleUnchecked();
+        }
     }
 ```
+首先获取当前线程ThreadLoacl中的looper，然后从Looper中获取消息队列，开启无限循环，将消息分发给对应的Handler去处理。
+
+#总结
+Handler原理就是，Handler发送消息到Looper的MessageQueue中去，Looper的无限循环开启，不断读取MessageQueue中的内容，然后再由msg.target将消息分配给对应的Handler去处理。
